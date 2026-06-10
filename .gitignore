@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Go
+*.exe
+*.test
+
+# Python
+__pycache__/
+.venv/
+
+# Logs
+*.log
