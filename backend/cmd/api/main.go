@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
+	"github.com/tomasrock18/japp/backend/internal/handler"
+	"github.com/tomasrock18/japp/backend/internal/storage"
 )
 
 func main() {
@@ -14,6 +16,10 @@ func main() {
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+
+	store := storage.NewMemoryStorage()
+
+	productHandler := handler.NewProductHandler(store)
 
 	r := chi.NewRouter()
 
@@ -25,6 +31,8 @@ func main() {
 			slog.Error("Health check error", "error", err)
 		}
 	})
+	r.Get("/products/{barcode}", productHandler.GetProduct)
+	r.Post("/products", productHandler.CreateProduct)
 
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
