@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -45,6 +46,12 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Failed to create product", "error", err)
 		http.Error(w, `{"error": "failed to create product"}`, http.StatusInternalServerError)
 		return
+	}
+
+	if err := product.IsValid(); err != nil {
+		slog.Error("Invalid product", "error", err)
+		errorMsg := fmt.Sprintf(`{"error": "validation failed", "details": "%v"}`, err)
+		http.Error(w, errorMsg, http.StatusBadRequest)
 	}
 
 	if err := h.storage.CreateProduct(product); err != nil {
