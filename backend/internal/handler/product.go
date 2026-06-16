@@ -39,6 +39,16 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(h.storage.Products)
+	if err != nil {
+		slog.Warn("Error encoding products", "error", err)
+		http.Error(w, `{"error": "error encoding products"}`, http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product model.Product
 

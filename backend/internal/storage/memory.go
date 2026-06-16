@@ -9,12 +9,12 @@ import (
 
 type MemoryStorage struct {
 	mu       sync.RWMutex
-	products map[string]model.Product
+	Products map[string]model.Product
 }
 
 func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
-		products: make(map[string]model.Product),
+		Products: make(map[string]model.Product),
 	}
 }
 
@@ -22,7 +22,7 @@ func (s *MemoryStorage) GetProduct(barcode string) (model.Product, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	product, exists := s.products[barcode]
+	product, exists := s.Products[barcode]
 	if !exists {
 		return model.Product{}, errors.New("product not found")
 	}
@@ -33,6 +33,6 @@ func (s *MemoryStorage) CreateProduct(product model.Product) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.products[product.Barcode] = product
+	s.Products[product.Barcode] = product
 	return nil
 }

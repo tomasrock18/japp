@@ -32,7 +32,10 @@ func main() {
 		}
 	})
 	r.Get("/products/{barcode}", productHandler.GetProduct)
+
 	r.Post("/products", productHandler.CreateProduct)
+
+	r.Get("/products", productHandler.GetAllProducts)
 
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
