@@ -80,3 +80,15 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	barcode := chi.URLParam(r, "barcode")
+	slog.Info("Deleting product", "barcode", barcode)
+
+	err := h.storage.DeleteProduct(barcode)
+	if err != nil {
+		http.Error(w, `{"error": product not found`, http.StatusNotFound)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

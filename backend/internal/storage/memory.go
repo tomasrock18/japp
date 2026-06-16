@@ -36,3 +36,15 @@ func (s *MemoryStorage) CreateProduct(product model.Product) error {
 	s.Products[product.Barcode] = product
 	return nil
 }
+
+func (s *MemoryStorage) DeleteProduct(barcode string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.Products[barcode]; exists {
+		delete(s.Products, barcode)
+		return nil
+	}
+
+	return errors.New("product not found")
+}
