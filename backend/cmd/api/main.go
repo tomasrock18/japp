@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -17,11 +19,19 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	loggingMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info(fmt.Sprintf("%v | %v", r.Method, time.Now()))
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	store := storage.NewMemoryStorage()
 
 	productHandler := handler.NewProductHandler(store)
 
 	r := chi.NewRouter()
+	r.Use(loggingMiddleware)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Health check requested")
