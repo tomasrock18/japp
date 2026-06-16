@@ -62,6 +62,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Invalid product", "error", err)
 		errorMsg := fmt.Sprintf(`{"error": "validation failed", "details": "%v"}`, err)
 		http.Error(w, errorMsg, http.StatusBadRequest)
+		return
 	}
 
 	if err := h.storage.CreateProduct(product); err != nil {
@@ -88,6 +89,7 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	err := h.storage.DeleteProduct(barcode)
 	if err != nil {
 		http.Error(w, `{"error": product not found`, http.StatusNotFound)
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -100,9 +102,11 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	product, err := h.storage.GetProduct(barcode)
 	if err != nil {
 		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
+		return
 	}
 	if err = json.NewDecoder(r.Body).Decode(&bodyMap); err != nil {
 		http.Error(w, `{"error": "failed to parse product"}`, http.StatusBadRequest)
+		return
 	}
 
 	for parameter := range bodyMap {
@@ -110,16 +114,19 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			errorMsg := fmt.Sprintf(`{"error": %v}`, err)
 			http.Error(w, errorMsg, http.StatusBadRequest)
+			return
 		}
 	}
 
 	err = h.storage.DeleteProduct(barcode)
 	if err != nil {
 		http.Error(w, `{"error": "failed to update product"}`, http.StatusNotFound)
+		return
 	}
 	err = h.storage.CreateProduct(product)
 	if err != nil {
 		http.Error(w, `{"error": "failed to update product"}`, http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
