@@ -49,6 +49,8 @@ func main() {
 
 	r.Delete("/products/{barcode}", productHandler.DeleteProduct)
 
+	r.Put("/products/{barcode}", productHandler.UpdateProduct)
+
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
 		slog.Warn("Miss BACKEND_PORT environment variable")

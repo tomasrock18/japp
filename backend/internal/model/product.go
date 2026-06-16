@@ -1,6 +1,9 @@
 package model
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Product struct {
 	Barcode        string  `json:"barcode"`
@@ -36,5 +39,25 @@ func (product *Product) IsValid() error {
 		return errors.New("carbs_per_100g should be greater than zero")
 	}
 
+	return nil
+}
+
+func (product *Product) UpdateField(field string, value any) error {
+	switch field {
+	case "barcode":
+		product.Barcode = value.(string)
+	case "name":
+		product.Name = value.(string)
+	case "kcal_per_100g":
+		product.KcalPer100g = value.(float64)
+	case "protein_per_100g":
+		product.ProteinPer100g = value.(float64)
+	case "fat_per_100g":
+		product.FatPer100g = value.(float64)
+	case "carbs_per_100g":
+		product.CarbsPer100g = value.(float64)
+	default:
+		return fmt.Errorf("unknown field %s", field)
+	}
 	return nil
 }

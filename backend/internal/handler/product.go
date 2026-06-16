@@ -92,3 +92,42 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	barcode := chi.URLParam(r, "barcode")
+	var bodyMap map[string]any
+
+	product, err := h.storage.GetProduct(barcode)
+	if err != nil {
+		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
+	}
+	if err = json.NewDecoder(r.Body).Decode(&bodyMap); err != nil {
+		http.Error(w, `{"error": "failed to parse product"}`, http.StatusBadRequest)
+	}
+
+	for parameter := range bodyMap {
+		err = product.UpdateField(parameter, bodyMap[parameter])
+		if err != nil {
+			errorMsg := fmt.Sprintf(`{"error": %v}`, err)
+			http.Error(w, errorMsg, http.StatusBadRequest)
+		}
+	}
+
+	err = h.storage.DeleteProduct(barcode)
+	if err != nil {
+		http.Error(w, `{"error": "failed to update product"}`, http.StatusNotFound)
+	}
+	err = h.storage.CreateProduct(product)
+	if err != nil {
+		http.Error(w, `{"error": "failed to update product"}`, http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(product)
+	if err != nil {
+		slog.Warn("Error encoding product", "error", err)
+		http.Error(w, `{"error": "error encoding product"}`, http.StatusInternalServerError)
+		return
+	}
+}
