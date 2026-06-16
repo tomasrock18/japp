@@ -88,7 +88,7 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 	err := h.storage.DeleteProduct(barcode)
 	if err != nil {
-		http.Error(w, `{"error": product not found`, http.StatusNotFound)
+		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
 		return
 	}
 
