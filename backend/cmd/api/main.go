@@ -27,12 +27,15 @@ func main() {
 	}
 
 	store := storage.NewMemoryStorage()
+	logStore := storage.NewLogStorage()
 
 	productHandler := handler.NewProductHandler(store)
+	logHandler := handler.NewLogHandler(logStore, store)
 
 	r := chi.NewRouter()
 	r.Use(loggingMiddleware)
 
+	// Product endpoints
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Health check requested")
 		w.WriteHeader(http.StatusOK)
@@ -42,14 +45,14 @@ func main() {
 		}
 	})
 	r.Get("/products/{barcode}", productHandler.GetProduct)
-
 	r.Post("/products", productHandler.CreateProduct)
-
 	r.Get("/products", productHandler.GetAllProducts)
-
 	r.Delete("/products/{barcode}", productHandler.DeleteProduct)
-
 	r.Put("/products/{barcode}", productHandler.UpdateProduct)
+
+	// Log endpoints
+	r.Post("/logs", logHandler.CreateLog)
+	r.Get("/users/{telegram_id}/stats", logHandler.GetDailyStats)
 
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
