@@ -53,6 +53,7 @@ func main() {
 	// Log endpoints
 	r.Post("/logs", logHandler.CreateLog)
 	r.Get("/users/{telegram_id}/stats", logHandler.GetDailyStats)
+	r.Get("/logs/{telegram_id}", logHandler.GetUserLogs)
 
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {

@@ -55,3 +55,20 @@ func isSameDay(t1, t2 time.Time) bool {
 
 	return y1 == y2 && m1 == m2 && d1 == d2
 }
+
+func (s *LogStorage) GetLogsByUser(telegramID int64) ([]model.FoodLog, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var result []model.FoodLog
+	for _, log := range s.logs {
+		if log.TelegramID == telegramID {
+			result = append(result, log)
+		}
+	}
+
+	if result == nil {
+		result = []model.FoodLog{}
+	}
+	return result, nil
+}

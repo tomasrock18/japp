@@ -126,3 +126,26 @@ func (h *LogHandler) GetDailyStats(w http.ResponseWriter, r *http.Request) {
 		slog.Warn("Failed to encode daily stats", "error", err)
 	}
 }
+
+func (h *LogHandler) GetUserLogs(w http.ResponseWriter, r *http.Request) {
+	telegramIDStr := chi.URLParam(r, "telegram_id")
+
+	telegramID, err := strconv.ParseInt(telegramIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid telegram id"}`, http.StatusBadRequest)
+		return
+	}
+
+	logs, err := h.logStorage.GetLogsByUser(telegramID)
+	if err != nil {
+		http.Error(w, `{"error": "Failed to extract user logs"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(logs); err != nil {
+		slog.Warn("Failed to encode user logs", "error", err)
+	}
+
+}
