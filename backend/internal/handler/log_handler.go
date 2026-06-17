@@ -136,7 +136,22 @@ func (h *LogHandler) GetUserLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logs, err := h.logStorage.GetLogsByUser(telegramID)
+	limit := 50
+	limitStr := r.URL.Query().Get("limit")
+	if limitStr != "" {
+		limitValue, err := strconv.Atoi(limitStr)
+		if err != nil {
+			http.Error(w, `{"error": "Invalid limit parameter"}`, http.StatusBadRequest)
+			return
+		}
+		if limitValue > 100 {
+			http.Error(w, `{"error": "limit should be lesser than 100"}`, http.StatusBadRequest)
+			return
+		}
+		limit = limitValue
+	}
+
+	logs, err := h.logStorage.GetLogsByUser(telegramID, limit)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to extract user logs"}`, http.StatusInternalServerError)
 		return

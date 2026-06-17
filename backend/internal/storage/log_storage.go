@@ -56,7 +56,7 @@ func isSameDay(t1, t2 time.Time) bool {
 	return y1 == y2 && m1 == m2 && d1 == d2
 }
 
-func (s *LogStorage) GetLogsByUser(telegramID int64) ([]model.FoodLog, error) {
+func (s *LogStorage) GetLogsByUser(telegramID int64, limit int) ([]model.FoodLog, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -64,6 +64,9 @@ func (s *LogStorage) GetLogsByUser(telegramID int64) ([]model.FoodLog, error) {
 	for _, log := range s.logs {
 		if log.TelegramID == telegramID {
 			result = append(result, log)
+		}
+		if len(result) == limit {
+			break
 		}
 	}
 
