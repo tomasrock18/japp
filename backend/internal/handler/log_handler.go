@@ -151,7 +151,22 @@ func (h *LogHandler) GetUserLogs(w http.ResponseWriter, r *http.Request) {
 		limit = limitValue
 	}
 
-	logs, err := h.logStorage.GetLogsByUser(telegramID, limit)
+	offset := 0
+	offsetStr := r.URL.Query().Get("offset")
+	if limitStr != "" {
+		offsetValue, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			http.Error(w, `{"error": "Invalid offset prarmeter"}`, http.StatusBadRequest)
+			return
+		}
+		if offsetValue < 0 {
+			http.Error(w, `{"error": "offset should be greater than 0"}`, http.StatusBadRequest)
+			return
+		}
+		offset = offsetValue
+	}
+
+	logs, err := h.logStorage.GetLogsByUser(telegramID, limit, offset)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to extract user logs"}`, http.StatusInternalServerError)
 		return
