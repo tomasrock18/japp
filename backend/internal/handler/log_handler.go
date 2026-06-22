@@ -153,7 +153,7 @@ func (h *LogHandler) GetUserLogs(w http.ResponseWriter, r *http.Request) {
 
 	offset := 0
 	offsetStr := r.URL.Query().Get("offset")
-	if limitStr != "" {
+	if offsetStr != "" {
 		offsetValue, err := strconv.Atoi(offsetStr)
 		if err != nil {
 			http.Error(w, `{"error": "Invalid offset prarmeter"}`, http.StatusBadRequest)
