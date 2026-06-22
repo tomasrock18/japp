@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"slices"
 	"sync"
 	"time"
 
@@ -77,6 +78,8 @@ func (s *LogStorage) GetLogsByUser(telegramID int64, limit, offset int) ([]model
 	if offset > len(result) {
 		return []model.FoodLog{}, nil
 	}
+	result = result[offset:]
+	slices.SortFunc(result, func(a, b model.FoodLog) int { return b.CreatedAt.Compare(a.CreatedAt) })
 
-	return result[offset:], nil
+	return result, nil
 }
