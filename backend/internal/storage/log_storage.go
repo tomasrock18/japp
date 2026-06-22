@@ -66,20 +66,23 @@ func (s *LogStorage) GetLogsByUser(telegramID int64, limit, offset int) ([]model
 		if log.TelegramID == telegramID {
 			result = append(result, log)
 		}
-		if len(result) == limit {
-			break
-		}
 	}
 
 	if result == nil {
 		result = []model.FoodLog{}
 	}
 
+	slices.SortFunc(result, func(a, b model.FoodLog) int { return b.CreatedAt.Compare(a.CreatedAt) })
+
 	if offset > len(result) {
 		return []model.FoodLog{}, nil
 	}
+
 	result = result[offset:]
-	slices.SortFunc(result, func(a, b model.FoodLog) int { return b.CreatedAt.Compare(a.CreatedAt) })
+
+	if limit < len(result) {
+		result = result[:limit]
+	}
 
 	return result, nil
 }
