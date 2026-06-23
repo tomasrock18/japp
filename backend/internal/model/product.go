@@ -12,6 +12,7 @@ type Product struct {
 	ProteinPer100g float64 `json:"protein_per_100g"`
 	FatPer100g     float64 `json:"fat_per_100g"`
 	CarbsPer100g   float64 `json:"carbs_per_100g"`
+	CreatedBy      string  `json:"created_by,omitempty"`
 }
 
 func (product *Product) IsValid() error {
