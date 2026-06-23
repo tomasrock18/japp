@@ -31,8 +31,8 @@ func (r *ProductRepository) GetProduct(ctx context.Context, barcode string) (mod
 
 func (r *ProductRepository) CreateProduct(ctx context.Context, product model.Product) (model.Product, error) {
 	query := `
-        INSERT INTO products (barcode, name, kcal_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO products (barcode, name, kcal_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g)
+        VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
 	_, err := r.pool.Exec(
@@ -44,7 +44,6 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, product model.Pro
 		product.ProteinPer100g,
 		product.FatPer100g,
 		product.CarbsPer100g,
-		product.CreatedBy,
 	)
 
 	return product, err
