@@ -87,6 +87,10 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]model.Product
 		products = append(products, product)
 	}
 
+	if err := rows.Err(); err != nil {
+		return products, err
+	}
+
 	return products, nil
 }
 
