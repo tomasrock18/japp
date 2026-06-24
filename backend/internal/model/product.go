@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,16 +14,16 @@ type Product struct {
 	ProteinPer100g float64   `json:"protein_per_100g"`
 	FatPer100g     float64   `json:"fat_per_100g"`
 	CarbsPer100g   float64   `json:"carbs_per_100g"`
-	CreatedBy      string    `json:"created_by,omitempty"`
-	CreatedAt      time.Time `json:"created_at,omitempty"`
+	CreatedBy      int64     `json:"created_by"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (product *Product) IsValid() error {
-	if product.Barcode == "" {
+	if strings.TrimSpace(product.Barcode) == "" {
 		return errors.New("barcode is empty")
 	}
 
-	if product.Name == "" {
+	if strings.TrimSpace(product.Name) == "" {
 		return errors.New("name is empty")
 	}
 
@@ -48,17 +49,41 @@ func (product *Product) IsValid() error {
 func (product *Product) UpdateField(field string, value any) error {
 	switch field {
 	case "barcode":
-		product.Barcode = value.(string)
+		if parsedValue, ok := value.(string); ok {
+			product.Barcode = parsedValue
+		} else {
+			return fmt.Errorf("bad barcode value: %v", value)
+		}
 	case "name":
-		product.Name = value.(string)
+		if parsedValue, ok := value.(string); ok {
+			product.Name = parsedValue
+		} else {
+			return fmt.Errorf("bad name value: %v", value)
+		}
 	case "kcal_per_100g":
-		product.KcalPer100g = value.(float64)
+		if parsedValue, ok := value.(float64); ok {
+			product.KcalPer100g = parsedValue
+		} else {
+			return fmt.Errorf("bad kcal_per_100g value: %v", value)
+		}
 	case "protein_per_100g":
-		product.ProteinPer100g = value.(float64)
+		if parsedValue, ok := value.(float64); ok {
+			product.ProteinPer100g = parsedValue
+		} else {
+			return fmt.Errorf("bad protein_per_100g value: %v", value)
+		}
 	case "fat_per_100g":
-		product.FatPer100g = value.(float64)
+		if parsedValue, ok := value.(float64); ok {
+			product.FatPer100g = parsedValue
+		} else {
+			return fmt.Errorf("bad fat_per_100g value: %v", value)
+		}
 	case "carbs_per_100g":
-		product.CarbsPer100g = value.(float64)
+		if parsedValue, ok := value.(float64); ok {
+			product.CarbsPer100g = parsedValue
+		} else {
+			return fmt.Errorf("bad carbs_per_100g value: %v", value)
+		}
 	default:
 		return fmt.Errorf("unknown field %s", field)
 	}
