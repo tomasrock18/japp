@@ -2,93 +2,74 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/tomasrock18/japp/backend/internal/model"
-	"github.com/tomasrock18/japp/backend/internal/storage"
+	"github.com/tomasrock18/japp/backend/internal/repository"
 )
 
 type ProductHandler struct {
-	storage *storage.MemoryStorage
+	repo repository.ProductRepository
 }
 
-func NewProductHandler(storage *storage.MemoryStorage) *ProductHandler {
-	return &ProductHandler{storage: storage}
+func NewProductHandler(repo repository.ProductRepository) *ProductHandler {
+	return &ProductHandler{repo: repo}
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	barcode := chi.URLParam(r, "barcode")
-	slog.Info("Getting product", "barcode", barcode)
 
-	product, err := h.storage.GetProduct(barcode)
+	product, err := h.repo.GetProduct(ctx, barcode)
 	if err != nil {
-		slog.Warn("Product not found", "barcode", barcode)
-		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(product)
-	if err != nil {
-		slog.Warn("Error encoding product", "error", err)
-		http.Error(w, `{"error": "error encoding product"}`, http.StatusInternalServerError)
-		return
-	}
+	writeJSON(w, http.StatusOK, product)
 }
 
-func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(h.storage.Products)
+func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	products, err := h.repo.GetAllProducts(ctx)
 	if err != nil {
-		slog.Warn("Error encoding products", "error", err)
-		http.Error(w, `{"error": "error encoding products"}`, http.StatusInternalServerError)
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
+	writeJSON(w, http.StatusOK, products)
 }
 
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var product model.Product
 
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-		slog.Error("Failed to create product", "error", err)
-		http.Error(w, `{"error": "failed to create product"}`, http.StatusInternalServerError)
+		http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
 	if err := product.IsValid(); err != nil {
-		slog.Error("Invalid product", "error", err)
-		errorMsg := fmt.Sprintf(`{"error": "validation failed", "details": "%v"}`, err)
-		http.Error(w, errorMsg, http.StatusBadRequest)
+		http.Error(w, `{"error": "product validation failed"}`, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.storage.CreateProduct(product); err != nil {
-		slog.Error("Failed to create product", "error", err)
-		http.Error(w, `{"error": "failed to create product"}`, http.StatusInternalServerError)
+	if _, err := h.repo.CreateProduct(ctx, product); err != nil {
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	err := json.NewEncoder(w).Encode(product)
-	if err != nil {
-		slog.Warn("Error encoding product", "error", err)
-		http.Error(w, `{"error": "error encoding product"}`, http.StatusInternalServerError)
-		return
-	}
+	writeJSON(w, http.StatusCreated, product)
 }
 
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	barcode := chi.URLParam(r, "barcode")
-	slog.Info("Deleting product", "barcode", barcode)
+	ctx := r.Context()
 
-	err := h.storage.DeleteProduct(barcode)
-	if err != nil {
-		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
+	barcode := chi.URLParam(r, "barcode")
+
+	if err := h.repo.DeleteProduct(ctx, barcode); err != nil {
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -96,45 +77,33 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	barcode := chi.URLParam(r, "barcode")
-	var bodyMap map[string]any
 
-	product, err := h.storage.GetProduct(barcode)
+	prodcut, err := h.repo.GetProduct(ctx, barcode)
 	if err != nil {
-		http.Error(w, `{"error": "product not found"}`, http.StatusNotFound)
-		return
-	}
-	if err = json.NewDecoder(r.Body).Decode(&bodyMap); err != nil {
-		http.Error(w, `{"error": "failed to parse product"}`, http.StatusBadRequest)
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
 
-	for parameter := range bodyMap {
-		err = product.UpdateField(parameter, bodyMap[parameter])
-		if err != nil {
-			errorMsg := fmt.Sprintf(`{"error": %v}`, err)
-			http.Error(w, errorMsg, http.StatusBadRequest)
+	var bodyMap map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&bodyMap); err != nil {
+		http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	for field, value := range bodyMap {
+		if err := prodcut.UpdateField(field, value); err != nil {
+			http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
 			return
 		}
 	}
 
-	err = h.storage.DeleteProduct(barcode)
-	if err != nil {
-		http.Error(w, `{"error": "failed to update product"}`, http.StatusNotFound)
+	if err := h.repo.UpdateProduct(ctx, prodcut); err != nil {
+		http.Error(w, `{"error": "internal error"}`, http.StatusInternalServerError)
 		return
 	}
-	err = h.storage.CreateProduct(product)
-	if err != nil {
-		http.Error(w, `{"error": "failed to update product"}`, http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(w).Encode(product)
-	if err != nil {
-		slog.Warn("Error encoding product", "error", err)
-		http.Error(w, `{"error": "error encoding product"}`, http.StatusInternalServerError)
-		return
-	}
+	writeJSON(w, http.StatusOK, prodcut)
 }
