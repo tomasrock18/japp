@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -18,11 +19,11 @@ type Product struct {
 }
 
 func (product *Product) IsValid() error {
-	if product.Barcode == "" {
+	if strings.TrimSpace(product.Barcode) == "" {
 		return errors.New("barcode is empty")
 	}
 
-	if product.Name == "" {
+	if strings.TrimSpace(product.Name) == "" {
 		return errors.New("name is empty")
 	}
 
