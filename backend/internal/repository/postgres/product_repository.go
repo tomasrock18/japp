@@ -62,7 +62,16 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]model.Product
 
 	for rows.Next() {
 		var product model.Product
-		if err := rows.Scan(); err != nil {
+		if err := rows.Scan(
+			&product.Barcode,
+			&product.Name,
+			&product.KcalPer100g,
+			&product.ProteinPer100g,
+			&product.FatPer100g,
+			&product.CarbsPer100g,
+			&product.CreatedBy,
+			&product.CreatedAt,
+		); err != nil {
 			return products, err
 		}
 		products = append(products, product)
