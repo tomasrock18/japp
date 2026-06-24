@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tomasrock18/japp/backend/internal/model"
@@ -40,9 +41,11 @@ func (r *ProductRepository) GetProduct(ctx context.Context, barcode string) (mod
 
 func (r *ProductRepository) CreateProduct(ctx context.Context, product model.Product) (model.Product, error) {
 	query := `
-        INSERT INTO products (barcode, name, kcal_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO products (barcode, name, kcal_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
+
+	telegramId, _ := strconv.Atoi(product.CreatedBy)
 
 	_, err := r.pool.Exec(
 		ctx,
@@ -53,6 +56,7 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, product model.Pro
 		product.ProteinPer100g,
 		product.FatPer100g,
 		product.CarbsPer100g,
+		telegramId,
 	)
 
 	return product, err
