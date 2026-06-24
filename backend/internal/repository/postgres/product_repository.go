@@ -21,7 +21,16 @@ func (r *ProductRepository) GetProduct(ctx context.Context, barcode string) (mod
 
 	query := `SELECT * FROM products WHERE barcode = $1`
 
-	err := r.pool.QueryRow(ctx, query, barcode).Scan()
+	err := r.pool.QueryRow(ctx, query, barcode).Scan(
+		&product.Barcode,
+		&product.Name,
+		&product.KcalPer100g,
+		&product.ProteinPer100g,
+		&product.FatPer100g,
+		&product.CarbsPer100g,
+		&product.CreatedBy,
+		&product.CreatedAt,
+	)
 	if err != nil {
 		return model.Product{}, err
 	}
